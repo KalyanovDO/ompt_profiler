@@ -9,9 +9,9 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include <direct.h>
+// #include <direct.h>
 
-#include "windows.h"
+// #include "windows.h"
 
 #include <cstring>
 #include <cstdio>
@@ -44,7 +44,7 @@ static vector<data_callback_ompt_to_file_t> data_to_file;
 
 void callback_parallel_begin(
 	ompt_data_t* encountering_task_data,         /* data of encountering task           */
-	const omp_frame_t *encountering_task_frame,  /* frame data of encountering task     */
+	const ompt_frame_t *encountering_task_frame,  /* frame data of encountering task     */
 	ompt_data_t *parallel_data,                  /* data of parallel region             */
 	unsigned int requested_parallelism,          /* requested number of threads in team */
 	int flag,                                    /* flag for invocation attribute       */
@@ -83,6 +83,7 @@ void callback_thread_begin(
 
 	//printf("[INFO] %s (%d) thread start (%llu)\n", thread_type == ompt_thread_worker ? "Worker" : "Other", thread_type, thread_data->value);
 	fout << ompt_callback_thread_begin << " " << (double)omp_get_wtime() - begin_epoch << " " << ompt_get_thread_data()->value << endl;
+	// fout.flush();		
 	//fout.close();
 
 }
@@ -91,9 +92,9 @@ void callback_thread_end(
 	ompt_data_t *thread_data              /* data of thread                       */
 ) {
 	//printf("[INFO] threads end (%llu)\n", thread_data->value);
-	data_callback_ompt_to_file_t* bufer = new data_callback_ompt_to_file_t;
 	omp_lock_t lock;
 	omp_init_lock(&lock);
+	data_callback_ompt_to_file_t* bufer = new data_callback_ompt_to_file_t;
 	bufer->which_callback = ompt_callback_thread_end;
 	bufer->process_time = (double)omp_get_wtime() - begin_epoch;
 	bufer->thread_id = ompt_get_thread_data()->value;
@@ -101,7 +102,7 @@ void callback_thread_end(
 	data_to_file.push_back(*bufer);
 	delete[] bufer;
 	omp_destroy_lock(&lock);
-	//fout << ompt_callback_thread_end << " " << (double)omp_get_wtime() - begin_epoch << " " << ompt_get_thread_data()->value << endl;
+	// fout << ompt_callback_thread_end << " " << (double)omp_get_wtime() - begin_epoch << " " << ompt_get_thread_data()->value << endl;
 }
 
 void callback_work(
@@ -157,7 +158,8 @@ void callback_master(
 }
 
 int ompt_initialize(ompt_function_lookup_t lookup, ompt_data_t *tool_data) {
-	fout.open("__time_points_data.txt", ios::out | ios::app);
+	// fout.open("__time_points_data.txt", ios::out | ios::app);
+	fout.open("__time_points_data.txt");
 
 	printf("[INFO] ompt_initialize is called\n");
 	begin_epoch = omp_get_wtime();        /*time normalization                    */
@@ -175,30 +177,6 @@ int ompt_initialize(ompt_function_lookup_t lookup, ompt_data_t *tool_data) {
 
 	return 1;// 1 = success
 }
-
-void ompt_finalize(ompt_data_t *tool_data) {
-	printf("[INFO] ompt_finalize is called\n");
-	//fout.open("__time_points_data.txt", ios::out | ios::app);
-	for (int i = 0; i < data_to_file.size(); i++) {
-		fout << data_to_file[i].which_callback <<
-			" " << data_to_file[i].process_time << " " << data_to_file[i].thread_id << endl;
-	}
-	data_to_file.clear();
-	fout.close();
-	return;
-	ompt_start_tool_result_t* result = (ompt_start_tool_result_t*)tool_data->ptr;
-	delete[] result;
-}
-
-ompt_start_tool_result_t* ompt_start_tool(unsigned int omp_version, const char *runtime_version) {
-	printf("[INFO] ompt_start_tool is called with omp_versoin = %u and runtime_version = %s\n", omp_version, runtime_version);
-	ompt_start_tool_result_t* result = new ompt_start_tool_result_t;
-	result->initialize = ompt_initialize;
-	result->finalize = ompt_finalize;
-	result->tool_data.ptr = (void*)result;
-	return result;
-}
-
 
 void run_py_script() {
 	//Py_Initialize();
@@ -221,30 +199,59 @@ void run_py_script() {
 	//	//free(buffer);
 	//}
 
-	_chdir("..");
-	_chdir("..");
-	//_chdir("matrixmul");
-	_chdir("profiling_modules");
-	system(R"(py imaging_profiling_1.1.py)");
+	// _chdir("..");
+	// _chdir("..");
+	// //_chdir("matrixmul");
+	// _chdir("profiling_modules");
+	// system(R"(py imaging_profiling_1.1.py)");
 }
 
-//int main(int argc, char* argv[]) {
-//	fout.open("time_points_data.txt");
-//	main_func(argc, argv);
-//	fout << ompt_callback_thread_end << " " << (double)omp_get_wtime() - begin_epoch << endl;
-//
-//	fout.close();
-//	atexit(run_py_script);
-//
-//	return 0;
-//}
-
-void enable_profiling() {
-	fout.open("__time_points_data.txt");
-}
-
-void disable_profiling(){
+void ompt_finalize(ompt_data_t *tool_data) {
+	printf("[INFO] ompt_finalize is called\n");
+	ofstream fout;
+	fout.open("__time_points_data.txt", ios::out | ios::app);
+	std::cout << "finalize vector size = " << data_to_file.size() << std::endl;
+	for (int i = 0; i < data_to_file.size(); i++) {
+		fout << data_to_file[i].which_callback <<
+			" " << data_to_file[i].process_time << " " << data_to_file[i].thread_id << endl;
+		fout.flush();		
+	}
+	data_to_file.clear();
 	fout.close();
 	run_py_script();
 	return;
+	ompt_start_tool_result_t* result = (ompt_start_tool_result_t*)tool_data->ptr;
+	delete[] result;
 }
+
+ompt_start_tool_result_t* ompt_start_tool(unsigned int omp_version, const char *runtime_version) {
+	printf("[INFO] ompt_start_tool is called with omp_version = %u and runtime_version = %s\n", omp_version, runtime_version);
+	ompt_start_tool_result_t* result = new ompt_start_tool_result_t;
+	result->initialize = ompt_initialize;
+	result->finalize = ompt_finalize;
+	result->tool_data.ptr = (void*)result;
+	return result;
+}
+
+
+
+// int main(int argc, char* argv[]) {
+// 	fout.open("time_points_data.txt");
+// 	// main_func(argc, argv);
+// 	fout << ompt_callback_thread_end << " " << (double)omp_get_wtime() - begin_epoch << endl;
+
+// 	fout.close();
+// 	atexit(run_py_script);
+
+// 	return 0;
+// }
+
+// void enable_profiling() {
+// 	// fout.open("__time_points_data.txt");
+// }
+
+// void disable_profiling(){
+// 	// fout.close();
+// 	// run_py_script();
+// 	// return;
+// }

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <omp.h>
 #include <vector>
-#include "../profiling_modules/profiling_module.h"
+// #include "../../profiling_module.h"
 
 using namespace std;
 
@@ -203,7 +203,7 @@ int main() {
 //*
 int main(int argc, char* argv[])
 {
-	enable_profiling();
+	// enable_profiling();
 	int n; //размерность задачи
 	float err;//требуемая точность решения
 	int max_k;//допустимое число итераций
@@ -248,8 +248,8 @@ int main(int argc, char* argv[])
 
 	jakobi_method(make_random_a(n), make_random_b(n), n, err, max_k);
 
-	atexit(disable_profiling);
-	exit(0);
+	// atexit(disable_profiling);
+	// exit(0);
 	//time_points.push_back(make_pair(2, omp_get_wtime()));
 	return 0;
 }//*/
