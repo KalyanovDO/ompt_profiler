@@ -11,7 +11,8 @@ import os
 
 dirname, fname = os.path.split(os.getcwd())
 #dirname, fname = os.path.split(dirname)
-path = os.path.join(dirname, r"x64", r"Release", r"time_points_data.txt")
+# path = os.path.join(dirname, r"x64", r"Release", r"time_points_data.txt")
+path = os.path.join(dirname, r"ompt_profiler", r"benchmarks", r"jakobi", r"__time_points_data.txt")
 
 
 print(r"Reading ", path, r" compleated sucsessfully")

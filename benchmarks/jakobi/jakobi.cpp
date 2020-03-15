@@ -1,6 +1,6 @@
 #include <iostream>
 #include <ctime>  
-#include <cstdlib>
+#include <cmath>
 #include <fstream>
 #include <omp.h>
 #include <vector>
@@ -120,16 +120,16 @@ void jakobi_method(float* a, float* b, int n, float err, int end_iter)
 			for (int j = 0; j < n; j++) {
 				b_err[i] += a[getSingleIndex(i, j, n)] * x_iter_young[j];
 			}
-			b_err[i] = abs(b[i] - b_err[i]) / abs(b[i]);
+			b_err[i] = std::abs(b[i] - b_err[i]) / std::abs(b[i]);
 		}
 
-		norma = abs(x_iter_young[0] - x_iter_old[0]);
+		norma = std::abs(x_iter_young[0] - x_iter_old[0]);
 
 //#pragma omp parallel for
 		for (int i = 0; i < n; i++) {
 			x_iter_err[i] = x_iter_young[i] - x_iter_old[i];
-			if (abs(x_iter_err[i]) > norma)
-				norma = abs(x_iter_err[i]);
+			if (std::abs(x_iter_err[i]) > norma)
+				norma = std::abs(x_iter_err[i]);
 			x_iter_old[i] = x_iter_young[i];
 			x_iter_young[i] = 0;
 		}
@@ -164,7 +164,7 @@ void jakobi_method(float* a, float* b, int n, float err, int end_iter)
 	cout << "maximum delta_x = ";
 	float max_iter_err = 0;
 	for (int i = 0; i < n; i++) {
-		if (max_iter_err < abs(x_iter_err[i])) max_iter_err = abs(x_iter_err[i]);
+		if (max_iter_err < std::abs(x_iter_err[i])) max_iter_err = std::abs(x_iter_err[i]);
 	}
 	cout << max_iter_err << "\n";
 	
@@ -172,7 +172,7 @@ void jakobi_method(float* a, float* b, int n, float err, int end_iter)
 	cout << "maximum accuracy of solution(|b-b'|/|b|) = ";
 	float max_b_err = 0;
 	for (int i = 0; i < n; i++) {
-		if (max_b_err < abs(b_err[i])) max_b_err = abs(b_err[i]);
+		if (max_b_err < std::abs(b_err[i])) max_b_err = std::abs(b_err[i]);
 	}
 	cout  << max_b_err << "\n";
 	cout << "\n";
